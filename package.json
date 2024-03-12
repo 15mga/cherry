@@ -1,0 +1,17 @@
+{
+  "name": "com.95eh.eu",
+  "displayName": "Cherry",
+  "version": "0.0.1",
+  "unity": "2020.3",
+  "description": "15m games",
+  "author": "95eh",
+  "keywords": [
+    "Cherry",
+    "15M Games"
+  ],
+  "dependencies": {
+    "com.unity.nuget.newtonsoft-json": "3.2.0",
+    "com.unity.textmeshpro": "2.0.1",
+    "com.unity.render-pipelines.universal": "7.4.3"
+  }
+}
