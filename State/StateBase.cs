@@ -48,10 +48,10 @@ namespace Cherry.State
             }
         }
 
-        protected void AddModel<T>() where T : IModel, new()
+        protected T AddModel<T>() where T : IModel, new()
         {
             _modelList.Add(typeof(T));
-            Game.Model.Add<T>();
+            return Game.Model.Add<T>();
         }
 
         protected void InitModel<T>() where T : IModel
@@ -59,14 +59,14 @@ namespace Cherry.State
             Game.Model.Get<T>().Initialize();
         }
 
-        protected void AddCtrl<T>() where T : ICtrl, new()
+        protected T AddCtrl<T>() where T : ICtrl, new()
         {
             if (Game.Ctrl.Has<T>())
             {
-                return;
+                return Game.Ctrl.Get<T>();
             }
             _ctrlList.Add(typeof(T));
-            Game.Ctrl.Add<T>();
+            return Game.Ctrl.Add<T>();
         }
 
         protected void InitCtrl<T>() where T : ICtrl
@@ -74,32 +74,32 @@ namespace Cherry.State
             Game.Ctrl.Get<T>().Initialize();
         }
 
-        protected void LoadView<T>(string key = null) where T : IView, new()
+        protected T LoadView<T>(string key = null) where T : IView, new()
         {
             _viewList.Add(typeof(T));
             Game.View.BindView<T>(key);
-            Game.View.LoadView<T>();
+            return Game.View.LoadView<T>();
         }
 
-        protected void LoadView<T>(GameObject go) where T : IView, new()
+        protected T LoadView<T>(GameObject go) where T : IView, new()
         {
             _viewList.Add(typeof(T));
             Game.View.BindView<T>(go);
-            Game.View.LoadView<T>();
+            return Game.View.LoadView<T>();
         }
 
-        protected void LoadView(Type type, string key = null)
+        protected IView LoadView(Type type, string key = null)
         {
             _viewList.Add(type);
             Game.View.BindView(type, key);
-            Game.View.LoadView(type);
+            return Game.View.LoadView(type);
         }
 
-        protected void LoadView(Type type, GameObject go)
+        protected IView LoadView(Type type, GameObject go)
         {
             _viewList.Add(type);
             Game.View.BindView(type, go);
-            Game.View.LoadView(type);
+            return Game.View.LoadView(type);
         }
 
         protected void LoadScene(string name, string tag = null, bool active = true, 
