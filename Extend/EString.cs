@@ -362,18 +362,16 @@ namespace Cherry.Extend
 
         private static IEnumerator loadWebTexture(string url, Action<Texture2D, IError> onComplete)
         {
-            using (var req = UnityWebRequestTexture.GetTexture(url))
+            using var req = UnityWebRequestTexture.GetTexture(url);
+            yield return req.SendWebRequest();
+            if (req.result != UnityWebRequest.Result.Success)
             {
-                yield return req.SendWebRequest();
-                if (req.result != UnityWebRequest.Result.Success)
-                {
-                    Game.Log.Error(req.error);
-                    onComplete(null, new Error(req.error));
-                }
-                else
-                {
-                    onComplete(DownloadHandlerTexture.GetContent(req), null);
-                }
+                Game.Log.Error(req.error);
+                onComplete(null, new Error(req.error));
+            }
+            else
+            {
+                onComplete(DownloadHandlerTexture.GetContent(req), null);
             }
         }
 
@@ -388,18 +386,38 @@ namespace Cherry.Extend
         private static IEnumerator loadWebAudio(string url, Action<AudioClip, IError> onComplete,
             AudioType audioType = AudioType.WAV)
         {
-            using (var req = UnityWebRequestMultimedia.GetAudioClip(url, audioType))
+            using var req = UnityWebRequestMultimedia.GetAudioClip(url, audioType);
+            yield return req.SendWebRequest();
+            if (req.result != UnityWebRequest.Result.Success)
             {
-                yield return req.SendWebRequest();
-                if (req.result != UnityWebRequest.Result.Success)
-                {
-                    Game.Log.Error(req.error);
-                    onComplete(null, new Error(req.error));
-                }
-                else
-                {
-                    onComplete(DownloadHandlerAudioClip.GetContent(req), null);
-                }
+                Game.Log.Error(req.error);
+                onComplete(null, new Error(req.error));
+            }
+            else
+            {
+                onComplete(DownloadHandlerAudioClip.GetContent(req), null);
+            }
+        }
+
+        public static IEnumerator LoadWebTxt(this string url, Action<string, IError> onComplete)
+        {
+            var c = loadWebTxt(url, onComplete);
+            Game.StartCo(c);
+            return c;
+        }
+
+        private static IEnumerator loadWebTxt(string url, Action<string, IError> onComplete)
+        {
+            using var req = UnityWebRequest.Get(url);
+            yield return req.SendWebRequest();
+            if (req.result != UnityWebRequest.Result.Success)
+            {
+                Game.Log.Error(req.error);
+                onComplete(null, new Error(req.error));
+            }
+            else
+            {
+                onComplete(req.downloadHandler.text, null);
             }
         }
     }
