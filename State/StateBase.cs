@@ -54,9 +54,9 @@ namespace Cherry.State
             return Game.Model.Add<T>();
         }
 
-        protected void InitModel<T>() where T : IModel
+        protected void InitModel<T>(Action onComplete = null) where T : IModel
         {
-            Game.Model.Get<T>().Initialize();
+            Game.Model.Get<T>().Initialize(onComplete);
         }
 
         protected T AddCtrl<T>() where T : ICtrl, new()

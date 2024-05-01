@@ -6,6 +6,7 @@ namespace Cherry.Model
     {
         public virtual void Initialize(Action onComplete = null)
         {
+            onComplete?.Invoke();
         }
 
         public virtual void Dispose()

@@ -68,10 +68,6 @@ namespace Cherry
         public virtual void Begin()
         {
             if (!string.IsNullOrEmpty(httpLog)) Game.Log.RegisterLogWriter(new HttpLogWriter(httpLog, logLevel));
-
-#if !UNITY_EDITOR
-                Game.Log.RegisterLogWriter(new FileLogWriter());
-#endif
         }
 
         protected virtual void InitAsset()

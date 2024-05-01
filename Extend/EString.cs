@@ -6,6 +6,8 @@ using System.Text;
 using Cherry.Misc;
 using UnityEngine;
 using UnityEngine.Networking;
+using YamlDotNet.Serialization;
+using YamlDotNet.Serialization.NamingConventions;
 
 namespace Cherry.Extend
 {
@@ -417,8 +419,30 @@ namespace Cherry.Extend
             }
             else
             {
-                onComplete(req.downloadHandler.text, null);
+                onComplete(req.downloadHandler.data.ToUTF8(), null);
             }
+        }
+
+        public static T DeserializeYml<T>(this string str)
+        {
+            return new DeserializerBuilder()
+                .WithNamingConvention(CamelCaseNamingConvention.Instance)
+                .Build().Deserialize<T>(str);
+        }
+
+        public static void LoadYmlAsync<T>(this string str, Action<T> onComplete)
+        {
+            str.LoadWebTxt((text, err) =>
+            {
+                if (err != null)
+                {
+                    Game.Log.Error($"load yml failed. path:{str}");
+                    return;
+                }
+
+                var obj = text.DeserializeYml<T>();
+                onComplete(obj);
+            });
         }
     }
 }
