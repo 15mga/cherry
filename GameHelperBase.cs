@@ -1,5 +1,6 @@
 using System;
 using Cherry.Asset;
+using Cherry.Audio;
 using Cherry.Cam;
 using Cherry.Command;
 using Cherry.Ctrl;
@@ -53,6 +54,7 @@ namespace Cherry
             if (http || !string.IsNullOrEmpty(httpLog)) InitHttp();
 
             InitAsset();
+            InitAudio();
             InitModel();
             InitCtrl();
             InitView();
@@ -86,6 +88,11 @@ namespace Cherry
                 default:
                     throw new ArgumentException($"not support mode: {_assetMode}");
             }
+        }
+
+        protected virtual void InitAudio()
+        {
+            Game.Register<IMAudio, MAudio>();
         }
 
         protected virtual void InitTimer()

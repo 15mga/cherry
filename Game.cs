@@ -16,6 +16,7 @@ namespace Cherry
         private static readonly Dictionary<Type, object> Modules = new();
         private IGameHelper _helper;
         public static IMAsset Asset { get; private set; }
+        public static IMAudio Audio { get; private set; }
         public static IMCamera Camera { get; private set; }
         public static IMCommand Command { get; private set; }
         public static IMCtrl Ctrl { get; private set; }
@@ -52,6 +53,7 @@ namespace Cherry
             _helper.Init();
 
             Asset = Get<IMAsset>();
+            Audio = Get<IMAudio>();
             Timer = Get<IMTimer>();
             Task = Get<IMTask>();
             Log = Get<IMLog>();
