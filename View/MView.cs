@@ -49,7 +49,7 @@ namespace Cherry.View
             foreach (var kvp in _nameToLayer) action(kvp.Value);
         }
 
-        public Canvas AddLayer(string name, bool defaultLayer = false, string before = null)
+        public Canvas AddLayer(string name, bool defaultLayer = false, string before = null, CanvasScaler.ScaleMode scaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize)
         {
             if (_nameToLayer.ContainsKey(name))
             {
@@ -78,7 +78,7 @@ namespace Cherry.View
             _nameToLayer.Add(name, layer);
             layer.renderMode = RenderMode.ScreenSpaceOverlay;
             var scaler = go.GetComponent<CanvasScaler>();
-            scaler.uiScaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize;
+            scaler.uiScaleMode = scaleMode;
             scaler.referenceResolution = new Vector2(Width, Height);
             return layer;
         }

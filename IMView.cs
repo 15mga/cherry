@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace Cherry
 {
@@ -18,7 +19,7 @@ namespace Cherry
 
         void AllLayer(Action<Canvas> action);
 
-        Canvas AddLayer(string name, bool defaultLayer = false, string before = null);
+        Canvas AddLayer(string name, bool defaultLayer = false, string before = null, CanvasScaler.ScaleMode scaleMode = CanvasScaler.ScaleMode.ScaleWithScreenSize);
 
         void RemoveLayer(string name);
 
