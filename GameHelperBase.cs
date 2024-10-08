@@ -10,6 +10,7 @@ using Cherry.Log;
 using Cherry.Model;
 using Cherry.Notice;
 using Cherry.Pool;
+using Cherry.Recorder;
 using Cherry.SceneObj;
 using Cherry.Task;
 using Cherry.Timer;
@@ -31,6 +32,8 @@ namespace Cherry
         [Header("资源加载类型")] [SerializeField] protected EAssetMode _assetMode;
         
         [Header("启用HTTP模块")] [SerializeField] protected bool http;
+        
+        [Header("启用Recorder模块")] [SerializeField] protected bool recorder;
 
         [Header("日志级别")] public ELogLevel logLevel = ELogLevel.Debug;
 
@@ -52,6 +55,7 @@ namespace Cherry
             InitCommand();
             InitNotice();
             if (http || !string.IsNullOrEmpty(httpLog)) InitHttp();
+            if (recorder) InitRecorder();
 
             InitAsset();
             InitAudio();
@@ -123,6 +127,11 @@ namespace Cherry
         protected virtual void InitHttp()
         {
             Game.Register<IMHttp, MHttp>();
+        }
+
+        private void InitRecorder()
+        {
+            Game.Register<IMRecorder, MRecorder>();
         }
 
         protected virtual void InitFsm()
