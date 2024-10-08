@@ -102,6 +102,13 @@ namespace Cherry.State
             return Game.View.LoadView(type);
         }
 
+        protected T LoadViewWithLayer<T>(string layer, string key = null) where T : IView, new()
+        {
+            _viewList.Add(typeof(T));
+            Game.View.BindView<T>(key);
+            return Game.View.LoadViewWithLayer<T>(layer);
+        }
+
         protected T LoadViewWithLayer<T>(string layer, GameObject go) where T : IView, new()
         {
             _viewList.Add(typeof(T));
