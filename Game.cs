@@ -33,8 +33,6 @@ namespace Cherry
         public static IMTrigger Trigger { get; private set; }
         public static IMView View { get; private set; }
         public static Game Instance { get; private set; }
-
-        public static IAction Action { get; set; }
         public static IPool<string> Id { get; private set; }
 
         private void Awake()
