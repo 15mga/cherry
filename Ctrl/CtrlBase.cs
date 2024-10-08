@@ -9,7 +9,7 @@ namespace Cherry.Ctrl
 
         public abstract void Initialize(Action onComplete = null);
 
-        public void Dispose()
+        public virtual void Dispose()
         {
             _listener.Dispose();
         }
