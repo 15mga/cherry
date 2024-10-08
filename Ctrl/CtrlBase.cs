@@ -1,25 +1,17 @@
 using System;
-using Cherry.Misc;
 using Cherry.Notice;
 
 namespace Cherry.Ctrl
 {
-    public abstract class CtrlBase : ActionBinder, ICtrl
+    public abstract class CtrlBase : ICtrl
     {
         private readonly NoticeListener _listener = new();
 
         public abstract void Initialize(Action onComplete = null);
 
-        public override void Dispose()
+        public void Dispose()
         {
             _listener.Dispose();
-
-            base.Dispose();
-        }
-
-        protected void Execute(string name, object data = null)
-        {
-            Game.Command.Execute(name, data);
         }
 
         protected void BindNotice(string name, Action<object> action, int count = 0)

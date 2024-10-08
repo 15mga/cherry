@@ -2,7 +2,6 @@ using System;
 using Cherry.Asset;
 using Cherry.Audio;
 using Cherry.Cam;
-using Cherry.Command;
 using Cherry.Ctrl;
 using Cherry.Fsm;
 using Cherry.Http;
@@ -52,7 +51,6 @@ namespace Cherry
             InitTrigger();
 
             InitFsm();
-            InitCommand();
             InitNotice();
             if (http || !string.IsNullOrEmpty(httpLog)) InitHttp();
             if (recorder) InitRecorder();
@@ -142,11 +140,6 @@ namespace Cherry
         protected virtual void InitPool()
         {
             Game.Register<IMPool, MPool>();
-        }
-
-        protected virtual void InitCommand()
-        {
-            Game.Register<IMCommand, MCommand>();
         }
 
         protected virtual void InitView()

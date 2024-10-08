@@ -518,11 +518,6 @@ namespace Cherry.View
             return UnLoadSubView(type, id);
         }
 
-        public void Execute(string name, object data = null)
-        {
-            Game.Command.Execute(name, data);
-        }
-
         public void DispatchNotice(string name, object data = null)
         {
             Game.Notice.DispatchNotice(name, data);

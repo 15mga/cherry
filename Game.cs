@@ -18,10 +18,11 @@ namespace Cherry
         public static IMAsset Asset { get; private set; }
         public static IMAudio Audio { get; private set; }
         public static IMCamera Camera { get; private set; }
-        public static IMCommand Command { get; private set; }
         public static IMCtrl Ctrl { get; private set; }
         public static IMFsm Fsm { get; private set; }
         public static IMHttp Http { get; private set; }
+        
+        public static IMRecorder Recorder { get; private set; }
         public static IMScene Scene { get; private set; }
         public static IMLog Log { get; private set; }
         public static IMModel Model { get; private set; }
@@ -60,9 +61,9 @@ namespace Cherry
             Notice = Get<IMNotice>();
             Trigger = Get<IMTrigger>();
             Http = Get<IMHttp>();
+            Recorder = Get<IMRecorder>();
             Fsm = Get<IMFsm>();
             Pool = Get<IMPool>();
-            Command = Get<IMCommand>();
             Model = Get<IMModel>();
             View = Get<IMView>();
             Ctrl = Get<IMCtrl>();
@@ -262,9 +263,6 @@ namespace Cherry
 
                 fsm.RegisterState(type);
             });
-
-            filter.Add(typeof(ICommand).IsAssignableFrom,
-                Command.BindCommand);
 
             filter.Add(typeof(IModel).IsAssignableFrom, type => Model.Add(type));
             filter.Add(typeof(ICtrl).IsAssignableFrom, type => Ctrl.Add(type));
