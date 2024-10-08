@@ -11,6 +11,9 @@ namespace Cherry.Recorder
 
         public int MaxRecorder { get; set; } = 100;
 
+        public bool CanRedo => _redo.Count > 0;
+        public bool CanUndo => _undo.Count > 0;
+
         public void Do(Action redo, Action undo)
         {
             Assert.IsNotNull(redo);
