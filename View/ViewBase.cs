@@ -14,7 +14,7 @@ namespace Cherry.View
     public abstract class ViewBase : IView
     {
         private readonly Dictionary<string, IView> _idToChildren = new();
-        private Dictionary<string, Action<object>> _noticeDic;
+        private Dictionary<string, NoticeListener> _noticeDic;
         private Dictionary<string, Tuple<Type, Transform>> _subViews = new();
 
         protected ViewBase()
@@ -61,7 +61,7 @@ namespace Cherry.View
 
         public void Unload()
         {
-            ClearNotice();
+            ClearAllNotice();
 
             if (Loaded)
             {
@@ -111,6 +111,8 @@ namespace Cherry.View
                 EventSystem.current.SetSelectedGameObject(null);
 
             if (!Loaded) return;
+
+            ClearAfterShowNotice();
 
             OnHide();
 
@@ -523,10 +525,10 @@ namespace Cherry.View
             Game.Notice.DispatchNotice(name, data);
         }
 
-        public void BindNotice(string name, Action<object> action)
+        public void BindNotice(string name, Action<object> action, bool afterShow = false)
         {
-            if (_noticeDic == null) _noticeDic = new Dictionary<string, Action<object>>();
-            _noticeDic.Add(name, action);
+            _noticeDic ??= new Dictionary<string, NoticeListener>();
+            _noticeDic.Add(name, new NoticeListener{action = action, afterShow = afterShow});
             Game.Notice.BindNotice(name, action);
         }
 
@@ -537,12 +539,37 @@ namespace Cherry.View
             Game.Notice.UnbindNotice(name, action);
         }
 
-        private void ClearNotice()
+        private void ClearAllNotice()
         {
             if (_noticeDic == null) return;
 
-            foreach (var kvp in _noticeDic) Game.Notice.UnbindNotice(kvp.Key, kvp.Value);
+            foreach (var kvp in _noticeDic) Game.Notice.UnbindNotice(kvp.Key, kvp.Value.action);
             _noticeDic.Clear();
+        }
+
+        private void ClearAfterShowNotice()
+        {
+            if (_noticeDic == null) return;
+
+            var list = new List<string>();
+            foreach (var kvp in _noticeDic)
+            {
+                var item = kvp.Value;
+                if (!item.afterShow) continue;
+                Game.Notice.UnbindNotice(kvp.Key, kvp.Value.action);
+                list.Add(kvp.Key);
+            }
+
+            foreach (var name in list)
+            {
+                _noticeDic.Remove(name);
+            }
+        }
+
+        private class NoticeListener
+        {
+            public Action<object> action;
+            public bool afterShow;
         }
     }
 }
