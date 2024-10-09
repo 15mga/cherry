@@ -19,6 +19,7 @@ namespace Cherry.Recorder
             Assert.IsNotNull(redo);
             Assert.IsNotNull(undo);
             redo();
+            _redo.Clear();
             _undo.Enqueue(new action{redo = redo, undo = undo});
             if (_undo.Count > MaxRecorder) _undo.Dequeue();
         }
