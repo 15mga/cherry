@@ -19,6 +19,10 @@ namespace Cherry.State
 
         public virtual void Exit()
         {
+            _modelList.Reverse();
+            _ctrlList.Reverse();
+            _viewList.Reverse();
+            _sceneList.Reverse();
             foreach (var type in _modelList)
             {
                 Game.Model.Remove(type);
@@ -46,6 +50,13 @@ namespace Cherry.State
             {
                 Game.Notice.UnbindNotice(kvp.Key, kvp.Value);
             }
+            
+            _modelList.Clear();
+            _ctrlList.Clear();
+            _viewList.Clear();
+            _sceneList.Clear();
+            _sceneObjToTags.Clear();
+            _notices.Clear();
         }
 
         protected T AddModel<T>() where T : IModel, new()
