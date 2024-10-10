@@ -22,7 +22,6 @@ namespace Cherry
         public static IMFsm Fsm { get; private set; }
         public static IMHttp Http { get; private set; }
         
-        public static IMRecorder Recorder { get; private set; }
         public static IMScene Scene { get; private set; }
         public static IMLog Log { get; private set; }
         public static IMModel Model { get; private set; }
@@ -59,7 +58,6 @@ namespace Cherry
             Notice = Get<IMNotice>();
             Trigger = Get<IMTrigger>();
             Http = Get<IMHttp>();
-            Recorder = Get<IMRecorder>();
             Fsm = Get<IMFsm>();
             Pool = Get<IMPool>();
             Model = Get<IMModel>();
