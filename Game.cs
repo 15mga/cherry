@@ -10,7 +10,7 @@ using UnityEngine;
 namespace Cherry
 {
     [DisallowMultipleComponent]
-    [AddComponentMenu("EU/Game")]
+    [AddComponentMenu("Cherry/Game")]
     public class Game : MonoBehaviour
     {
         private static readonly Dictionary<Type, object> Modules = new();
