@@ -148,7 +148,7 @@ namespace Cherry.State
             Game.Scene.LoadScene(name, tag, LoadSceneMode.Additive, active, onComplete, onProgress);
         }
 
-        protected void LoadScene(string name, Action onComplete = null)
+        protected void LoadScene(string name, Action onComplete)
         {
             _sceneList.Add(name);
             Game.Scene.LoadScene(name, onComplete);
