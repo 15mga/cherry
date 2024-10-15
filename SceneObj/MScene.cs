@@ -66,8 +66,8 @@ namespace Cherry.SceneObj
             }
         }
 
-        public void LoadScene(string name, string tag = null, LoadSceneMode mode = LoadSceneMode.Single, bool active = true, 
-            Action onComplete = null, Action<float> onProgress = null)
+        public void LoadScene(string name, string tag = null, LoadSceneMode mode = LoadSceneMode.Additive, bool active = true, 
+            Action onComplete = null, Action<float> onProgress = null, bool assetScene = true)
         {
             tag ??= name;
             if (_tagToSceneName.ContainsKey(tag))
@@ -84,36 +84,59 @@ namespace Cherry.SceneObj
             
             _sceneNameToTag.Add(name, tag);
             _tagToSceneName.Add(tag, name);
+            if (assetScene)
+            {
+                Game.Asset.LoadScene(name, scene =>
+                {
+                    LoadSceneComplete(scene, name, tag, onComplete, active);
+                });
+            }
+            else
+            {
+                LoadScene(name, mode, scene =>
+                {
+                    LoadSceneComplete(scene, name, tag, onComplete, active);
+                }, onProgress);
+            }
+        }
+
+        private void LoadSceneComplete(Scene scene, string name, string tag, Action onComplete = null, bool active = true)
+        {
+            if (active) SceneManager.SetActiveScene(scene);
+
+            _sceneNameToScene.Add(name, scene);
+
+            var list = new List<GameObject>();
+            scene.GetRootGameObjects(list);
+            var rootList = new List<GameObject>();
+            foreach (var gameObject in list)
+            {
+                rootList.Add(gameObject);
+            }
+
+
+            if (_tagToSceneObjType.TryGetValue(tag, out var types))
+            {
+                var roots = rootList.ToArray();
+                foreach (var type in types)
+                {
+                    var s = (ISceneObj)Activator.CreateInstance(type);
+                    _sceneObjTypeToSceneObj.Add(type, s);
+
+                    s.Load(scene, roots);
+                }
+            }
+            onComplete?.Invoke();
+        }
+
+        private void LoadScene(string name, LoadSceneMode mode = LoadSceneMode.Additive, Action<Scene> onComplete = null, Action<float> onProgress = null)
+        {
             var op = SceneManager.LoadSceneAsync(name, mode);
             if (onProgress != null) Game.Trigger.BindTrigger(() => op.isDone, () => onProgress(op.progress));
             op.completed += _ =>
             {
                 var scene = SceneManager.GetSceneByName(name);
-                if (active) SceneManager.SetActiveScene(scene);
-
-                _sceneNameToScene.Add(name, scene);
-
-                var list = new List<GameObject>();
-                scene.GetRootGameObjects(list);
-                var rootList = new List<GameObject>();
-                foreach (var gameObject in list)
-                {
-                    rootList.Add(gameObject);
-                }
-
-
-                if (_tagToSceneObjType.TryGetValue(tag, out var types))
-                {
-                    var roots = rootList.ToArray();
-                    foreach (var type in types)
-                    {
-                        var s = (ISceneObj)Activator.CreateInstance(type);
-                        _sceneObjTypeToSceneObj.Add(type, s);
-
-                        s.Load(scene, roots);
-                    }
-                }
-                onComplete?.Invoke();
+                onComplete(scene);
             };
         }
 

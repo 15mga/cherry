@@ -11,7 +11,7 @@ namespace Cherry
         void UnbindObj<T>(params string[] tags) where T : ISceneObj;
         void UnbindObj(Type type, params string[] tags);
         void LoadScene(string name, string tag = null, LoadSceneMode mode = LoadSceneMode.Additive, bool active = true, 
-            Action onComplete = null, Action<float> onProgress = null);
+            Action onComplete = null, Action<float> onProgress = null, bool assetScene = true);
         void LoadScene(string name, Action onComplete = null);
 
         void UnloadScene(string key, Action onComplete = null);
