@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using Cherry;
 using Cherry.Extend;
 using Cherry.Pool;
 using UnityEngine;
@@ -122,8 +121,7 @@ namespace Cherry.Audio
         }
 
         public string PlayWeb(string url, string tag = null, Action<AudioSource> onPlay = null,
-            Action onComplete = null,
-            IObjectHelper<AudioSource> helper = null, Transform target = null, AudioType audioType = AudioType.WAV)
+            Action onComplete = null, IObjectHelper<AudioSource> helper = null, Transform target = null)
         {
             if (string.IsNullOrEmpty(tag)) tag = url;
 
@@ -160,7 +158,7 @@ namespace Cherry.Audio
                     _tagToId[tag].Remove(id);
                     onComplete?.Invoke();
                 }, _audioSourcePool.Recycle, ((AudioHelper)helper)?.repeat ?? 1);
-            }, audioType);
+            });
             return id;
         }
 
