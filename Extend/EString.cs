@@ -377,17 +377,32 @@ namespace Cherry.Extend
             }
         }
 
-        public static IEnumerator LoadWebAudio(this string url, Action<AudioClip, IError> onComplete,
-            AudioType audioType = AudioType.WAV)
+        public static IEnumerator LoadWebAudio(this string url, Action<AudioClip, IError> onComplete)
         {
-            var c = loadWebAudio(url, onComplete, audioType);
+            var c = loadWebAudio(url, onComplete);
             Game.StartCo(c);
             return c;
         }
 
-        private static IEnumerator loadWebAudio(string url, Action<AudioClip, IError> onComplete,
-            AudioType audioType = AudioType.WAV)
+        public static readonly Dictionary<string, AudioType> AudioTypes = new()
         {
+            { ".acc", AudioType.ACC },
+            { ".aiff", AudioType.AIFF },
+            { ".it", AudioType.IT },
+            { ".mod", AudioType.MOD },
+            {".mp3", AudioType.MPEG},
+            {".ogg", AudioType.OGGVORBIS},
+            {".s3m", AudioType.S3M},
+            { ".wav", AudioType.WAV },
+            { ".xm", AudioType.XM },
+            { ".xma", AudioType.XMA },
+            { ".vag", AudioType.VAG },
+        };
+
+        private static IEnumerator loadWebAudio(string url, Action<AudioClip, IError> onComplete)
+        {
+            if (!AudioTypes.TryGetValue(System.IO.Path.GetExtension(url), out var audioType)) 
+                audioType = AudioType.UNKNOWN;
             using var req = UnityWebRequestMultimedia.GetAudioClip(url, audioType);
             yield return req.SendWebRequest();
             if (req.result != UnityWebRequest.Result.Success)
