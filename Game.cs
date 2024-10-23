@@ -104,11 +104,6 @@ namespace Cherry
             }
         }
 
-        public void PushNextFrameAction(Action action)
-        {
-            _nextFrameActions.Add(action);
-        }
-
         private void OnDestroy()
         {
             OnDispose?.Invoke();
@@ -225,6 +220,11 @@ namespace Cherry
 
             Log.Warn($"not exist type {type}");
             return null;
+        }
+
+        public static void PushNextFrameAction(Action action)
+        {
+            _nextFrameActions.Add(action);
         }
 
         public static Coroutine StartCo(IEnumerator coroutine)
