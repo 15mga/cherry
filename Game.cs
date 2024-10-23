@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using Cherry.Attr;
 using Cherry.Misc;
@@ -91,6 +92,21 @@ namespace Cherry
         private void LateUpdate()
         {
             OnLateUpdate?.Invoke();
+            
+            if (_nextFrameActions.Count > 0)
+            {
+                var actions = _nextFrameActions.ToArray();
+                _nextFrameActions.Clear();
+                OnOnce += () =>
+                {
+                    foreach (var action in actions) action();
+                };
+            }
+        }
+
+        public void PushNextFrameAction(Action action)
+        {
+            _nextFrameActions.Add(action);
         }
 
         private void OnDestroy()
@@ -118,6 +134,8 @@ namespace Cherry
         public static event Action OnDispose;
 
         public static event Action OnQuit;
+        
+        private static readonly List<Action> _nextFrameActions = new();
 
         public static string GetGuid()
         {
