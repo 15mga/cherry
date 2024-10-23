@@ -225,11 +225,12 @@ namespace Cherry.Audio
             Action onComplete = null, IObjectHelper<AudioSource> helper = null, Transform target = null,
             bool autoRelease = false)
         {
+            if (string.IsNullOrEmpty(tag)) tag = "";
             var id = Game.GetGuid();
             var audio = _audioPool.Spawn();
             audio.free = false;
             audio.tag = tag;
-
+            
             _idToAudio[id] = audio;
             if (!_tagToId.TryGetValue(tag, out var list))
             {
