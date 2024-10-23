@@ -71,6 +71,9 @@ public interface IMAudio
     string PlayWeb(string url, string tag = null, Action<AudioSource> onPlay = null, Action onComplete = null,
         IObjectHelper<AudioSource> helper = null, Transform target = null);
 
+    string PlayClip(AudioClip clip, string tag = null, Action<AudioSource> onPlay = null,
+        Action onComplete = null, IObjectHelper<AudioSource> helper = null, Transform target = null,
+        bool autoRelease = false);
     void ReleaseSourceByTag(string tag);
     void ReleaseAllSource();
 

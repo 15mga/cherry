@@ -221,6 +221,59 @@ namespace Cherry.Audio
             return id;
         }
 
+        public string PlayClip(AudioClip clip, string tag = null, Action<AudioSource> onPlay = null,
+            Action onComplete = null, IObjectHelper<AudioSource> helper = null, Transform target = null,
+            bool autoRelease = false)
+        {
+            var id = Game.GetGuid();
+            var audio = _audioPool.Spawn();
+            audio.free = false;
+            audio.tag = tag;
+
+            _idToAudio[id] = audio;
+            if (!_tagToId.TryGetValue(tag, out var list))
+            {
+                list = new List<string>();
+                _tagToId.Add(tag, list);
+            }
+
+            list.Add(id);
+            
+            
+            var go = _audioSourcePool.Spawn();
+            go.transform.SetParent(target ? target : _root);
+            go.transform.localPosition = Vector3.zero;
+
+            var audioSource = go.GetComp<AudioSource>();
+            ResetAudio(tag, audioSource);
+            audioSource.clip = clip;
+            helper?.Set(audioSource);
+            onPlay?.Invoke(audioSource);
+            audio.Play(audioSource, () =>
+            {
+                _idToAudio.Remove(id);
+                _tagToId[tag].Remove(id);
+                if (autoRelease)
+                {
+                    Game.Asset.Release(clip);
+                }
+                else
+                {
+                    if (!_tagToClip.TryGetValue(tag, out var clips))
+                    {
+                        clips = new List<AudioClip>();
+                        _tagToClip.Add(tag, clips);
+                    }
+
+                    clips.Add(clip);
+                }
+
+                onComplete?.Invoke();
+            }, _audioSourcePool.Recycle, ((AudioHelper)helper)?.repeat ?? 1);
+            
+            return id;
+        }
+
         public void ReleaseSourceByTag(string tag)
         {
             if (!_tagToClip.TryGetValue(tag, out var list)) return;
