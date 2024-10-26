@@ -5,6 +5,7 @@ using UnityEngine.Audio;
 
 public interface IMAudio
 {
+    AudioListener Listener { get; }
     /// <summary>
     ///     设置默认混合器
     /// </summary>

@@ -27,11 +27,13 @@ namespace Cherry.Audio
         private string _defaultMixer;
 
         private readonly Transform _root;
+        
+        public AudioListener Listener { get; }
 
         public MAudio()
         {
             _root = Game.CreateRoot("MAudio");
-            _root.gameObject.AddComponent<AudioListener>();
+            Listener = _root.gameObject.AddComponent<AudioListener>();
             _audioSourcePool = new Pool<GameObject>(() =>
             {
                 var go = new GameObject("audio source");
