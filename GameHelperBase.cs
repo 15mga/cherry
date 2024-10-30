@@ -36,6 +36,8 @@ namespace Cherry
         [Header("启用Http Log")] [SerializeField]
         protected string httpLog = "";
 
+        protected Func<HostPlayModeParameters> _hostPlayModeParameters;
+
         /// <summary>
         ///     初始化内置模块
         /// </summary>
@@ -81,7 +83,7 @@ namespace Cherry
                     Game.Register(MAsset.CreateOffline());
                     break;
                 case EAssetMode.Host:
-                    Game.Register(MAsset.CreateHost(HostPlayModeParameters()));
+                    Game.Register(MAsset.CreateHost(_hostPlayModeParameters()));
                     break;
                 default:
                     throw new ArgumentException($"not support mode: {_assetMode}");
@@ -156,11 +158,6 @@ namespace Cherry
         protected virtual void InitCamera()
         {
             Game.Register<IMCamera, MCamera>();
-        }
-
-        protected virtual HostPlayModeParameters HostPlayModeParameters()
-        {
-            throw new NotImplementedException();
         }
     }
 }
