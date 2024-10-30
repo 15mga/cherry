@@ -438,6 +438,28 @@ namespace Cherry.Extend
             }
         }
 
+        public static IEnumerator LoadWebBytes(this string url, Action<byte[], IError> onComplete)
+        {
+            var c = loadWebBytes(url, onComplete);
+            Game.StartCo(c);
+            return c;
+        }
+
+        private static IEnumerator loadWebBytes(string url, Action<byte[], IError> onComplete)
+        {
+            using var req = UnityWebRequest.Get(url);
+            yield return req.SendWebRequest();
+            if (req.result != UnityWebRequest.Result.Success)
+            {
+                Game.Log.Error(req.error);
+                onComplete(null, new Error(req.error));
+            }
+            else
+            {
+                onComplete(req.downloadHandler.data, null);
+            }
+        }
+
         public static T DeserializeYml<T>(this string str)
         {
             return new DeserializerBuilder()
