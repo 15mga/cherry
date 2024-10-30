@@ -10,104 +10,35 @@ namespace Cherry.Asset
 {
     public class MAsset : IMAsset
     {
-        public const string N_ManifestSuccess = "asset_manifest_success";
         public const string N_Begin = "asset_update_begin";
         public const string N_NoNews = "asset_no_news";
         public const string N_Over = "asset_update_over";
         public const string N_Progress = "asset_progress";
         public const string N_Error = "asset_update_error";
         public const string N_Item = "asset_update_download_item";
-        public class BeginInfo
-        {
-            public string LocalVer;
-            public string RemoteVer;
-            public int Count;
-            public long Bytes;
-        }
-
-        public class ProgressInfo
-        {
-            public int TotalCount;
-            public int CurrCount;
-            public long TotalBytes;
-            public long CurrBytes;
-        }
-        public class ErrorItem
-        {
-            public string Name;
-            public string Error;
-        }
-
-        public class UpdateItem
-        {
-            public string Name;
-            public long Bytes;
-        }
-        public class OverInfo
-        {
-            public bool Success;
-            public string Error;
-        }
 
         private readonly Dictionary<GameObject, AssetHandle> _goToHandle = new();
         private readonly Dictionary<Object, AssetHandle> _objToHandle = new();
         private readonly Dictionary<string, Scene> _sceneToHandle = new();
 
+        public static InitializeParameters InitParams;
+
         private ResourcePackage _package;
-        private InitializeParameters _initParams;
 
         public string Ver => _package.GetPackageVersion();
-
-        private EDefaultBuildPipeline _buildPipeline;
-
-        public static IMAsset CreateEditor(string manifestFilePath = "", EDefaultBuildPipeline buildPipeline = EDefaultBuildPipeline.ScriptableBuildPipeline)
-        {
-            return new MAsset
-            {
-                _initParams = new EditorSimulateModeParameters
-                {
-                    SimulateManifestFilePath = manifestFilePath
-                },
-                _buildPipeline = buildPipeline,
-            };
-        }
-
-        public static IMAsset CreateOffline()
-        {
-            return new MAsset
-            {
-                _initParams = new OfflinePlayModeParameters(),
-            };
-        }
-
-        public static IMAsset CreateHost(HostPlayModeParameters hostParameters)
-        {
-            return new MAsset
-            {
-                _initParams = hostParameters
-            };
-        }
-
-        private MAsset()
-        {
-            
-        }
 
         public void Init(string pkg, Action onComplete)
         {
             YooAssets.Initialize(new Logger());
             _package = YooAssets.CreatePackage(pkg);
-            if (_initParams is EditorSimulateModeParameters p)
-            {
-                p.SimulateManifestFilePath = EditorSimulateModeHelper.SimulateBuild(_buildPipeline, pkg);
-            }
-            _package.InitializeAsync(_initParams).Completed += op =>
+            _package.InitializeAsync(InitParams).Completed += op =>
             {
                 if (op.Status != EOperationStatus.Succeed)
                 {
                     Game.Log.Error($"InitializeYooAsset error:{op.Error}");
                     return;
                 }
+
                 onComplete();
             };
         }
@@ -123,6 +54,7 @@ namespace Cherry.Asset
                     Game.Log.Error($"load fail:{h.LastError}");
                     return;
                 }
+
                 if (h.AssetObject is T o)
                 {
                     _objToHandle[o] = h;
@@ -146,6 +78,7 @@ namespace Cherry.Asset
                     Game.Log.Error($"load fail:{h.LastError}");
                     return;
                 }
+
                 _objToHandle[h.AssetObject] = h;
                 onComplete(h.AssetObject);
             };
@@ -227,6 +160,11 @@ namespace Cherry.Asset
                 if (onProgress != null) Game.Trigger.BindTrigger(() => op.IsDone, () => onProgress(op.Progress));
                 op.Completed += _ =>
                 {
+                    if (op.Result == null)
+                    {
+                        Game.Log.Error($"spawn failed:{path}");
+                        return;
+                    }
                     _goToHandle[op.Result] = handle;
                     action(op.Result);
                 };
@@ -276,56 +214,39 @@ namespace Cherry.Asset
             };
         }
 
-        public void UpdateAssets()
+        public void UpdateVersion()
         {
-            GetLocalVer();
-        }
-
-        private void GetLocalVer()
-        {
-            var ver = _package.GetPackageVersion();
-            GetRemoteVer(ver);
-        }
-        
-        private void GetRemoteVer(string localVer)
-        {
-            var op = _package.UpdatePackageVersionAsync();
+            var op = _package.RequestPackageVersionAsync();
             op.Completed += _ =>
             {
                 if (op.Status != EOperationStatus.Succeed)
                 {
-                    Game.Notice.DispatchNotice(N_Over, new OverInfo
-                    {
-                        Success = false,
-                        Error = op.Error,
-                    });
+                    Game.Log.Error(op.Error);
+                    Game.Notice.DispatchNotice(N_NoNews);
                     return;
                 }
-                GetManifest(localVer, op.PackageVersion);
+
+                UpdateManifest(op.PackageVersion);
             };
         }
-        
-        private void GetManifest(string localVer, string remoteVer)
+
+        private void UpdateManifest(string ver)
         {
-            var op = _package.UpdatePackageManifestAsync(remoteVer);
-            op.Completed += op =>
+            var op = _package.UpdatePackageManifestAsync(ver);
+            op.Completed += _ =>
             {
                 if (op.Status != EOperationStatus.Succeed)
                 {
-                    Game.Notice.DispatchNotice(N_Over, new OverInfo
-                    {
-                        Success = false,
-                        Error = op.Error,
-                    });
+                    Game.Log.Error(op.Error);
+                    Game.Notice.DispatchNotice(N_NoNews);
                     return;
                 }
 
-                Game.Notice.DispatchNotice(N_ManifestSuccess);
-                DownloadAssets(localVer, remoteVer);
+                Download(ver);
             };
         }
 
-        private void DownloadAssets(string localVer, string remoteVer)
+        private void Download(string version)
         {
             var op = _package.CreateResourceDownloader(10, 3);
             if (op.TotalDownloadCount == 0)
@@ -333,12 +254,12 @@ namespace Cherry.Asset
                 Game.Notice.DispatchNotice(N_NoNews);
                 return;
             }
+            Game.Log.Debug($"version:{version} count:{op.TotalDownloadCount}");
             Game.Notice.DispatchNotice(N_Begin, new BeginInfo
             {
-                LocalVer = localVer,
-                RemoteVer = remoteVer,
+                RemoteVer = version,
                 Count = op.TotalDownloadCount,
-                Bytes = op.TotalDownloadBytes,
+                Bytes = op.TotalDownloadBytes
             });
             op.OnDownloadProgressCallback = (count, downloadCount, bytes, downloadBytes) =>
             {
@@ -347,7 +268,7 @@ namespace Cherry.Asset
                     TotalCount = count,
                     CurrCount = downloadCount,
                     TotalBytes = bytes,
-                    CurrBytes = downloadBytes,
+                    CurrBytes = downloadBytes
                 });
             };
             op.OnDownloadErrorCallback = (name, error) =>
@@ -355,7 +276,7 @@ namespace Cherry.Asset
                 Game.Notice.DispatchNotice(N_Error, new ErrorItem
                 {
                     Name = name,
-                    Error = error,
+                    Error = error
                 });
             };
             op.OnStartDownloadFileCallback = (name, bytes) =>
@@ -363,16 +284,50 @@ namespace Cherry.Asset
                 Game.Notice.DispatchNotice(N_Item, new UpdateItem
                 {
                     Name = name,
-                    Bytes = bytes,
+                    Bytes = bytes
                 });
             };
             op.OnDownloadOverCallback = _ =>
             {
                 Game.Notice.DispatchNotice(N_Over, new OverInfo
                 {
-                    Success = true,
+                    Success = true
                 });
             };
+            op.BeginDownload();
+        }
+
+        public class BeginInfo
+        {
+            public long Bytes;
+            public int Count;
+            public string RemoteVer;
+        }
+
+        public class ProgressInfo
+        {
+            public long CurrBytes;
+            public int CurrCount;
+            public long TotalBytes;
+            public int TotalCount;
+        }
+
+        public class ErrorItem
+        {
+            public string Error;
+            public string Name;
+        }
+
+        public class UpdateItem
+        {
+            public long Bytes;
+            public string Name;
+        }
+
+        public class OverInfo
+        {
+            public string Error;
+            public bool Success;
         }
 
         private class Logger : YooAsset.ILogger

@@ -39,6 +39,6 @@ namespace Cherry
         void UnloadScene(string path, Action onComplete = null);
 
         void LoadRaw(string path, Action<byte[]> onComplete, Action<float> onProgress = null);
-        void UpdateAssets();
+        void UpdateVersion();
     }
 }
