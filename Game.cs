@@ -1,7 +1,6 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
-using System.Linq;
 using System.Reflection;
 using Cherry.Attr;
 using Cherry.Misc;
@@ -15,6 +14,8 @@ namespace Cherry
     public class Game : MonoBehaviour
     {
         private static readonly Dictionary<Type, object> Modules = new();
+
+        private static readonly List<Action> _nextFrameActions = new();
         private IGameHelper _helper;
         public static IMAsset Asset { get; private set; }
         public static IMAudio Audio { get; private set; }
@@ -22,7 +23,7 @@ namespace Cherry
         public static IMCtrl Ctrl { get; private set; }
         public static IMFsm Fsm { get; private set; }
         public static IMHttp Http { get; private set; }
-        
+
         public static IMScene Scene { get; private set; }
         public static IMLog Log { get; private set; }
         public static IMModel Model { get; private set; }
@@ -92,7 +93,7 @@ namespace Cherry
         private void LateUpdate()
         {
             OnLateUpdate?.Invoke();
-            
+
             if (_nextFrameActions.Count > 0)
             {
                 var actions = _nextFrameActions.ToArray();
@@ -106,6 +107,7 @@ namespace Cherry
 
         private void OnDestroy()
         {
+            Debug.Log("destroy");
             OnDispose?.Invoke();
             OnUpdate = null;
             OnLateUpdate = null;
@@ -115,6 +117,7 @@ namespace Cherry
 
         private void OnApplicationQuit()
         {
+            Debug.Log("quit");
             OnQuit?.Invoke();
         }
 
@@ -129,8 +132,6 @@ namespace Cherry
         public static event Action OnDispose;
 
         public static event Action OnQuit;
-        
-        private static readonly List<Action> _nextFrameActions = new();
 
         public static string GetGuid()
         {

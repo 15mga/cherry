@@ -22,7 +22,9 @@ namespace Cherry.Log
             Application.logMessageReceived += OutputLog;
             Game.OnDispose += () =>
             {
-                for (var index = 0; index < _writer.Count; index++) _writer[index].Dispose();
+                foreach (var writer in _writer)
+                    writer.Dispose();
+                _writer.Clear();
             };
         }
 
@@ -85,7 +87,7 @@ namespace Cherry.Log
             switch (level)
             {
                 case ELogLevel.Debug:
-                    UnityEngine.Debug.Log($"<color=green>{msg}</color>");
+                    UnityEngine.Debug.Log(msg);
                     break;
                 case ELogLevel.Info:
                     UnityEngine.Debug.Log(msg);

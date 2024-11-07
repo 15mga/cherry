@@ -8,7 +8,7 @@ namespace Cherry.Fsm
 
         public MFsm()
         {
-            Main = new Cherry.Fsm.Fsm();
+            Main = new Fsm();
             Game.OnQuit += Main.Dispose;
         }
 
@@ -22,7 +22,7 @@ namespace Cherry.Fsm
                 return null;
             }
 
-            var fsm = new Cherry.Fsm.Fsm();
+            var fsm = new Fsm();
             _nameToFsm.Add(name, fsm);
             return fsm;
         }

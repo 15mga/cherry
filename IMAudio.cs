@@ -6,6 +6,7 @@ using UnityEngine.Audio;
 public interface IMAudio
 {
     AudioListener Listener { get; }
+
     /// <summary>
     ///     设置默认混合器
     /// </summary>
@@ -55,26 +56,18 @@ public interface IMAudio
     /// <param name="helper"></param>
     void BindAudioSourceHelper(string key, IPoolHelper<AudioSource> helper);
 
-    /// <summary>
-    ///     播放音源
-    /// </summary>
-    /// <param name="key">资源key</param>
-    /// <param name="tag">标签</param>
-    /// <param name="onPlay"></param>
-    /// <param name="onComplete"></param>
-    /// <param name="helper">配置选项</param>
-    /// <param name="target">播放的对象,如果对象为空,则挂载到声音监听对象</param>
-    /// <param name="autoRelease"></param>
-    /// <returns>AudioSource的id,可用于暂停,停止</returns>
-    string PlaySource(string key, string tag = null, Action<AudioSource> onPlay = null, Action onComplete = null,
-        IObjectHelper<AudioSource> helper = null, Transform target = null, bool autoRelease = false);
+    string PlayAsset(string key, string tag = null, Action<AudioSource> onPlay = null, Action onComplete = null,
+        IObjectHelper<AudioSource> helper = null, Transform target = null, bool autoRelease = true);
 
     string PlayWeb(string url, string tag = null, Action<AudioSource> onPlay = null, Action onComplete = null,
         IObjectHelper<AudioSource> helper = null, Transform target = null);
 
     string PlayClip(AudioClip clip, string tag = null, Action<AudioSource> onPlay = null,
-        Action onComplete = null, IObjectHelper<AudioSource> helper = null, Transform target = null,
-        bool autoRelease = false);
+        Action onComplete = null, IObjectHelper<AudioSource> helper = null, Transform parent = null);
+
+    string PlaySource(AudioSource audioSource, AudioClip clip, string tag = null,
+        Action<AudioSource> onPlay = null, Action onComplete = null, IObjectHelper<AudioSource> helper = null);
+
     void ReleaseSourceByTag(string tag);
     void ReleaseAllSource();
 

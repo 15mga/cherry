@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Text;
 using Cherry.Misc;
@@ -13,6 +14,21 @@ namespace Cherry.Extend
 {
     public static class EString
     {
+        public static readonly Dictionary<string, AudioType> AudioTypes = new()
+        {
+            { ".acc", AudioType.ACC },
+            { ".aiff", AudioType.AIFF },
+            { ".it", AudioType.IT },
+            { ".mod", AudioType.MOD },
+            { ".mp3", AudioType.MPEG },
+            { ".ogg", AudioType.OGGVORBIS },
+            { ".s3m", AudioType.S3M },
+            { ".wav", AudioType.WAV },
+            { ".xm", AudioType.XM },
+            { ".xma", AudioType.XMA },
+            { ".vag", AudioType.VAG }
+        };
+
         /// <summary>
         ///     按指定长度填补字符
         /// </summary>
@@ -384,24 +400,9 @@ namespace Cherry.Extend
             return c;
         }
 
-        public static readonly Dictionary<string, AudioType> AudioTypes = new()
-        {
-            { ".acc", AudioType.ACC },
-            { ".aiff", AudioType.AIFF },
-            { ".it", AudioType.IT },
-            { ".mod", AudioType.MOD },
-            {".mp3", AudioType.MPEG},
-            {".ogg", AudioType.OGGVORBIS},
-            {".s3m", AudioType.S3M},
-            { ".wav", AudioType.WAV },
-            { ".xm", AudioType.XM },
-            { ".xma", AudioType.XMA },
-            { ".vag", AudioType.VAG },
-        };
-
         private static IEnumerator loadWebAudio(string url, Action<AudioClip, IError> onComplete)
         {
-            if (!AudioTypes.TryGetValue(System.IO.Path.GetExtension(url), out var audioType)) 
+            if (!AudioTypes.TryGetValue(Path.GetExtension(url), out var audioType))
                 audioType = AudioType.UNKNOWN;
             using var req = UnityWebRequestMultimedia.GetAudioClip(url, audioType);
             yield return req.SendWebRequest();

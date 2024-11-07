@@ -17,6 +17,8 @@ namespace Cherry.Audio
 
         private readonly Dictionary<string, Audio> _idToAudio = new();
 
+        private readonly Transform _root;
+
         private readonly Dictionary<string, List<AudioClip>> _tagToClip = new();
 
         private readonly Dictionary<string, IPoolHelper<AudioSource>> _tagToHelper = new();
@@ -25,10 +27,6 @@ namespace Cherry.Audio
         private readonly Dictionary<string, AudioMixer> _tagToMixers = new();
 
         private string _defaultMixer;
-
-        private readonly Transform _root;
-        
-        public AudioListener Listener { get; }
 
         public MAudio()
         {
@@ -42,6 +40,8 @@ namespace Cherry.Audio
             }, Object.Destroy);
             SetListener();
         }
+
+        public AudioListener Listener { get; }
 
         public void SetDefaultMixer(string tag)
         {
@@ -161,119 +161,6 @@ namespace Cherry.Audio
                     onComplete?.Invoke();
                 }, _audioSourcePool.Recycle, ((AudioHelper)helper)?.repeat ?? 1);
             });
-            return id;
-        }
-
-        public string PlaySource(string key, string tag = null, Action<AudioSource> onPlay = null,
-            Action onComplete = null, IObjectHelper<AudioSource> helper = null, Transform target = null,
-            bool autoRelease = false)
-        {
-            if (string.IsNullOrEmpty(tag)) tag = key;
-
-            var id = Game.GetGuid();
-            var audio = _audioPool.Spawn();
-            audio.free = false;
-            audio.tag = tag;
-
-            _idToAudio[id] = audio;
-            if (!_tagToId.TryGetValue(tag, out var list))
-            {
-                list = new List<string>();
-                _tagToId.Add(tag, list);
-            }
-
-            list.Add(id);
-
-            Game.Asset.Load<AudioClip>(key, clip =>
-            {
-                if (!_idToAudio.ContainsKey(id)) return;
-
-                var go = _audioSourcePool.Spawn();
-                go.transform.SetParent(target ? target : _root);
-                go.transform.localPosition = Vector3.zero;
-
-                var audioSource = go.GetComp<AudioSource>();
-                ResetAudio(tag, audioSource);
-                audioSource.clip = clip;
-                helper?.Set(audioSource);
-                onPlay?.Invoke(audioSource);
-                audio.Play(audioSource, () =>
-                {
-                    _idToAudio.Remove(id);
-                    _tagToId[tag].Remove(id);
-                    if (autoRelease)
-                    {
-                        Game.Asset.Release(clip);
-                    }
-                    else
-                    {
-                        if (!_tagToClip.TryGetValue(tag, out var clips))
-                        {
-                            clips = new List<AudioClip>();
-                            _tagToClip.Add(tag, clips);
-                        }
-
-                        clips.Add(clip);
-                    }
-
-                    onComplete?.Invoke();
-                }, _audioSourcePool.Recycle, ((AudioHelper)helper)?.repeat ?? 1);
-            });
-
-            return id;
-        }
-
-        public string PlayClip(AudioClip clip, string tag = null, Action<AudioSource> onPlay = null,
-            Action onComplete = null, IObjectHelper<AudioSource> helper = null, Transform target = null,
-            bool autoRelease = false)
-        {
-            if (string.IsNullOrEmpty(tag)) tag = "";
-            var id = Game.GetGuid();
-            var audio = _audioPool.Spawn();
-            audio.free = false;
-            audio.tag = tag;
-            
-            _idToAudio[id] = audio;
-            if (!_tagToId.TryGetValue(tag, out var list))
-            {
-                list = new List<string>();
-                _tagToId.Add(tag, list);
-            }
-
-            list.Add(id);
-            
-            
-            var go = _audioSourcePool.Spawn();
-            go.transform.SetParent(target ? target : _root);
-            go.transform.localPosition = Vector3.zero;
-
-            var audioSource = go.GetComp<AudioSource>();
-            ResetAudio(tag, audioSource);
-            audioSource.clip = clip;
-            helper?.Set(audioSource);
-            onPlay?.Invoke(audioSource);
-            audio.Play(audioSource, () =>
-            {
-                _idToAudio.Remove(id);
-                _tagToId[tag].Remove(id);
-                if (autoRelease)
-                {
-                    Game.Asset.Release(clip);
-                }
-                else
-                {
-                    if (!_tagToClip.TryGetValue(tag, out var clips))
-                    {
-                        clips = new List<AudioClip>();
-                        _tagToClip.Add(tag, clips);
-                    }
-
-                    clips.Add(clip);
-                }
-
-                onComplete?.Invoke();
-            }, _audioSourcePool.Recycle, ((AudioHelper)helper)?.repeat ?? 1);
-            
             return id;
         }
 
@@ -404,6 +291,151 @@ namespace Cherry.Audio
             }
 
             return audioMixer.FindMatchingGroups(group);
+        }
+
+        public string PlayAsset(string key, string tag = null, Action<AudioSource> onPlay = null,
+            Action onComplete = null, IObjectHelper<AudioSource> helper = null, Transform target = null,
+            bool autoRelease = true)
+        {
+            if (string.IsNullOrEmpty(tag)) tag = key;
+
+            var id = Game.GetGuid();
+            var audio = _audioPool.Spawn();
+            audio.free = false;
+            audio.tag = tag;
+
+            _idToAudio[id] = audio;
+            if (!_tagToId.TryGetValue(tag, out var list))
+            {
+                list = new List<string>();
+                _tagToId.Add(tag, list);
+            }
+
+            list.Add(id);
+
+            Game.Asset.Load<AudioClip>(key, clip =>
+            {
+                if (!_idToAudio.ContainsKey(id)) return;
+
+                var go = _audioSourcePool.Spawn();
+                go.transform.SetParent(target ? target : _root);
+                go.transform.localPosition = Vector3.zero;
+
+                var audioSource = go.GetComp<AudioSource>();
+                ResetAudio(tag, audioSource);
+                audioSource.clip = clip;
+                helper?.Set(audioSource);
+                onPlay?.Invoke(audioSource);
+                audio.Play(audioSource, () =>
+                {
+                    _idToAudio.Remove(id);
+                    _tagToId[tag].Remove(id);
+                    if (autoRelease)
+                    {
+                        Game.Asset.Release(clip);
+                    }
+                    else
+                    {
+                        if (!_tagToClip.TryGetValue(tag, out var clips))
+                        {
+                            clips = new List<AudioClip>();
+                            _tagToClip.Add(tag, clips);
+                        }
+
+                        clips.Add(clip);
+                    }
+
+                    onComplete?.Invoke();
+                }, _audioSourcePool.Recycle, ((AudioHelper)helper)?.repeat ?? 1);
+            });
+
+            return id;
+        }
+
+        public string PlaySource(AudioSource audioSource, AudioClip clip, string tag = null,
+            Action<AudioSource> onPlay = null, Action onComplete = null, IObjectHelper<AudioSource> helper = null)
+        {
+            if (string.IsNullOrEmpty(tag)) tag = "";
+            var id = Game.GetGuid();
+            var audio = _audioPool.Spawn();
+            audio.free = false;
+            audio.tag = tag;
+
+            _idToAudio[id] = audio;
+            if (!_tagToId.TryGetValue(tag, out var list))
+            {
+                list = new List<string>();
+                _tagToId.Add(tag, list);
+            }
+
+            list.Add(id);
+
+            ResetAudio(tag, audioSource);
+            audioSource.clip = clip;
+            helper?.Set(audioSource);
+            onPlay?.Invoke(audioSource);
+            audio.Play(audioSource, () =>
+            {
+                _idToAudio.Remove(id);
+                _tagToId[tag].Remove(id);
+                if (!_tagToClip.TryGetValue(tag, out var clips))
+                {
+                    clips = new List<AudioClip>();
+                    _tagToClip.Add(tag, clips);
+                }
+
+                clips.Add(clip);
+
+                onComplete?.Invoke();
+            }, null, ((AudioHelper)helper)?.repeat ?? 1);
+
+            return id;
+        }
+
+        public string PlayClip(AudioClip clip, string tag = null, Action<AudioSource> onPlay = null,
+            Action onComplete = null, IObjectHelper<AudioSource> helper = null, Transform parent = null)
+        {
+            if (string.IsNullOrEmpty(tag)) tag = "";
+            var id = Game.GetGuid();
+            var audio = _audioPool.Spawn();
+            audio.free = false;
+            audio.tag = tag;
+
+            _idToAudio[id] = audio;
+            if (!_tagToId.TryGetValue(tag, out var list))
+            {
+                list = new List<string>();
+                _tagToId.Add(tag, list);
+            }
+
+            list.Add(id);
+
+
+            var go = _audioSourcePool.Spawn();
+            go.transform.SetParent(parent ? parent : _root);
+            go.transform.localPosition = Vector3.zero;
+
+            var audioSource = go.GetComp<AudioSource>();
+            ResetAudio(tag, audioSource);
+            audioSource.clip = clip;
+            helper?.Set(audioSource);
+            onPlay?.Invoke(audioSource);
+            audio.Play(audioSource, () =>
+            {
+                _idToAudio.Remove(id);
+                _tagToId[tag].Remove(id);
+                if (!_tagToClip.TryGetValue(tag, out var clips))
+                {
+                    clips = new List<AudioClip>();
+                    _tagToClip.Add(tag, clips);
+                }
+
+                clips.Add(clip);
+
+                onComplete?.Invoke();
+            }, _audioSourcePool.Recycle, ((AudioHelper)helper)?.repeat ?? 1);
+
+            return id;
         }
 
         private void ResetAudio(string tag, AudioSource audioSource)
