@@ -7,8 +7,9 @@ using System.Text;
 using Cherry.Misc;
 using UnityEngine;
 using UnityEngine.Networking;
-using YamlDotNet.Serialization;
-using YamlDotNet.Serialization.NamingConventions;
+
+// using YamlDotNet.Serialization;
+// using YamlDotNet.Serialization.NamingConventions;
 
 namespace Cherry.Extend
 {
@@ -408,7 +409,7 @@ namespace Cherry.Extend
             yield return req.SendWebRequest();
             if (req.result != UnityWebRequest.Result.Success)
             {
-                Game.Log.Error(req.error);
+                Game.Log.Error($"load web audio {url} failed: {req.error}");
                 onComplete(null, new Error(req.error));
             }
             else
@@ -459,28 +460,6 @@ namespace Cherry.Extend
             {
                 onComplete(req.downloadHandler.data, null);
             }
-        }
-
-        public static T DeserializeYml<T>(this string str)
-        {
-            return new DeserializerBuilder()
-                .WithNamingConvention(CamelCaseNamingConvention.Instance)
-                .Build().Deserialize<T>(str);
-        }
-
-        public static void LoadYmlAsync<T>(this string str, Action<T> onComplete)
-        {
-            str.LoadWebTxt((text, err) =>
-            {
-                if (err != null)
-                {
-                    Game.Log.Error($"load yml failed. path:{str}");
-                    return;
-                }
-
-                var obj = text.DeserializeYml<T>();
-                onComplete(obj);
-            });
         }
     }
 }

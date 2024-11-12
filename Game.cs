@@ -68,7 +68,7 @@ namespace Cherry
             Scene = Get<IMScene>();
             Camera = Get<IMCamera>();
 
-            Log.Info("EU \n:https://blog.95eh.com");
+            Log.Info("Cherry \n:https://15m.games");
 
             _helper.Begin();
         }
