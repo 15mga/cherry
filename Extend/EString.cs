@@ -385,7 +385,7 @@ namespace Cherry.Extend
             yield return req.SendWebRequest();
             if (req.result != UnityWebRequest.Result.Success)
             {
-                Game.Log.Error(req.error);
+                Game.Log.Error($"load web texture {url} failed: {req.error}");
                 onComplete(null, new Error(req.error));
             }
             else
@@ -431,7 +431,7 @@ namespace Cherry.Extend
             yield return req.SendWebRequest();
             if (req.result != UnityWebRequest.Result.Success)
             {
-                Game.Log.Error(req.error);
+                Game.Log.Error($"load web text {url} failed: {req.error}");
                 onComplete(null, new Error(req.error));
             }
             else

@@ -8,11 +8,12 @@ namespace Cherry.SceneObj
 {
     public class MScene : IMScene
     {
+        private readonly Dictionary<string, bool> _assetScenes = new();
         private readonly Dictionary<string, Scene> _sceneNameToScene = new();
         private readonly Dictionary<string, string> _sceneNameToTag = new();
+        private readonly Dictionary<Type, ISceneObj> _sceneObjTypeToSceneObj = new();
         private readonly Dictionary<string, string> _tagToSceneName = new();
         private readonly Dictionary<string, List<Type>> _tagToSceneObjType = new();
-        private readonly Dictionary<Type, ISceneObj> _sceneObjTypeToSceneObj = new();
 
         public void BindObj<T>(params string[] tags) where T : ISceneObj
         {
@@ -26,16 +27,10 @@ namespace Cherry.SceneObj
             Assert.IsTrue(tags.Length > 0);
 #endif
             foreach (var tag in tags)
-            {
                 if (_tagToSceneObjType.TryGetValue(tag, out var list))
-                {
                     list.Add(type);
-                }
                 else
-                {
-                    _tagToSceneObjType[tag] = new List<Type>{type};
-                }
-            }
+                    _tagToSceneObjType[tag] = new List<Type> { type };
         }
 
         public void UnbindObj<T>(params string[] tags) where T : ISceneObj
@@ -54,22 +49,17 @@ namespace Cherry.SceneObj
             {
                 if (!_tagToSceneObjType.TryGetValue(tag, out var list)) continue;
                 list.Remove(type);
-                if (list.Count == 0)
-                {
-                    delTags.Add(tag);
-                }
+                if (list.Count == 0) delTags.Add(tag);
             }
 
-            foreach (var tag in delTags)
-            {
-                _tagToSceneObjType.Remove(tag);
-            }
+            foreach (var tag in delTags) _tagToSceneObjType.Remove(tag);
         }
 
-        public void LoadScene(string name, string tag = null, LoadSceneMode mode = LoadSceneMode.Additive, bool active = true, 
+        public void LoadScene(string name, string tag = null, LoadSceneMode mode = LoadSceneMode.Additive,
+            bool active = true,
             Action onComplete = null, Action<float> onProgress = null, bool assetScene = true)
         {
-            tag ??= name;
+            if (string.IsNullOrEmpty(tag)) tag = name;
             if (_tagToSceneName.ContainsKey(tag))
             {
                 Game.Log.Warn($"exist tag {tag}");
@@ -81,26 +71,64 @@ namespace Cherry.SceneObj
                 Game.Log.Warn($"exist scene {name}");
                 return;
             }
-            
+
+            Game.Log.Debug($"load scene name:{name} tag:{tag}");
             _sceneNameToTag.Add(name, tag);
             _tagToSceneName.Add(tag, name);
+            _assetScenes.Add(name, assetScene);
+            if (assetScene)
+                Game.Asset.LoadScene(name, scene => { LoadSceneComplete(scene, name, tag, onComplete, active); });
+            else
+                LoadScene(name, mode, scene => { LoadSceneComplete(scene, name, tag, onComplete, active); },
+                    onProgress);
+        }
+
+        public void LoadScene(string name, Action onComplete = null)
+        {
+            LoadScene(name, name, LoadSceneMode.Additive, true, onComplete);
+        }
+
+        public void UnloadScene(string name, Action onComplete = null)
+        {
+            if (!_sceneNameToScene.ContainsKey(name)) return;
+
+            _sceneNameToScene.Remove(name);
+            var tag = _sceneNameToTag[name];
+            _tagToSceneName.Remove(tag);
+            _sceneNameToTag.Remove(name);
+            if (_tagToSceneObjType.TryGetValue(tag, out var list))
+                foreach (var type in list)
+                {
+                    _sceneObjTypeToSceneObj[type].Unload();
+                    _sceneObjTypeToSceneObj.Remove(type);
+                }
+
+            _tagToSceneObjType.Remove(tag);
+            var assetScene = _assetScenes[name];
+            _assetScenes.Remove(name);
             if (assetScene)
             {
-                Game.Asset.LoadScene(name, scene =>
-                {
-                    LoadSceneComplete(scene, name, tag, onComplete, active);
-                });
+                Game.Asset.UnloadScene(name, onComplete);
             }
             else
             {
-                LoadScene(name, mode, scene =>
-                {
-                    LoadSceneComplete(scene, name, tag, onComplete, active);
-                }, onProgress);
+                var op = SceneManager.UnloadSceneAsync(name);
+                if (op != null) op.completed += _ => { onComplete?.Invoke(); };
             }
         }
 
-        private void LoadSceneComplete(Scene scene, string name, string tag, Action onComplete = null, bool active = true)
+        public void UnloadSceneByTag(string tag, Action onComplete = null)
+        {
+            if (_tagToSceneName.TryGetValue(tag, out var key)) UnloadScene(key, onComplete);
+        }
+
+        public T GetObj<T>() where T : ISceneObj
+        {
+            return _sceneObjTypeToSceneObj.TryGetValue(typeof(T), out var scene) ? (T)scene : default;
+        }
+
+        private void LoadSceneComplete(Scene scene, string name, string tag, Action onComplete = null,
+            bool active = true)
         {
             if (active) SceneManager.SetActiveScene(scene);
 
@@ -109,10 +137,7 @@ namespace Cherry.SceneObj
             var list = new List<GameObject>();
             scene.GetRootGameObjects(list);
             var rootList = new List<GameObject>();
-            foreach (var gameObject in list)
-            {
-                rootList.Add(gameObject);
-            }
+            foreach (var gameObject in list) rootList.Add(gameObject);
 
 
             if (_tagToSceneObjType.TryGetValue(tag, out var types))
@@ -126,10 +151,12 @@ namespace Cherry.SceneObj
                     s.Load(scene, roots);
                 }
             }
+
             onComplete?.Invoke();
         }
 
-        private void LoadScene(string name, LoadSceneMode mode = LoadSceneMode.Additive, Action<Scene> onComplete = null, Action<float> onProgress = null)
+        private void LoadScene(string name, LoadSceneMode mode = LoadSceneMode.Additive,
+            Action<Scene> onComplete = null, Action<float> onProgress = null)
         {
             var op = SceneManager.LoadSceneAsync(name, mode);
             if (onProgress != null) Game.Trigger.BindTrigger(() => op.isDone, () => onProgress(op.progress));
@@ -138,46 +165,6 @@ namespace Cherry.SceneObj
                 var scene = SceneManager.GetSceneByName(name);
                 onComplete(scene);
             };
-        }
-
-        public void LoadScene(string name, Action onComplete = null)
-        {
-            LoadScene(name, name, LoadSceneMode.Additive, true, onComplete);
-        }
-
-        public void UnloadScene(string name, Action onComplete = null)
-        {
-            if (!_sceneNameToScene.ContainsKey(name)) return;
-
-            _sceneNameToScene.Remove(name);
-            var tag = _tagToSceneName[name];
-            _tagToSceneName.Remove(name);
-            _sceneNameToTag.Remove(tag);
-            if (_tagToSceneObjType.TryGetValue(tag, out var list))
-            {
-                foreach (var type in list)
-                {
-                    _sceneObjTypeToSceneObj[type].Unload();
-                    _sceneObjTypeToSceneObj.Remove(type);
-                }
-            }
-            _tagToSceneObjType.Remove(tag);
-            Game.View.UnloadView(name);
-            var op = SceneManager.UnloadSceneAsync(name);
-            if (op != null)
-            {
-                op.completed += _ => { onComplete?.Invoke(); };
-            }
-        }
-
-        public void UnloadSceneByTag(string tag, Action onComplete = null)
-        {
-            if (_tagToSceneName.TryGetValue(tag, out var key)) UnloadScene(key, onComplete);
-        }
-
-        public T GetObj<T>() where T : ISceneObj
-        {
-            return _sceneObjTypeToSceneObj.TryGetValue(typeof(T), out var scene) ? (T)scene : default;
         }
     }
 }
